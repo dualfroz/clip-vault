@@ -1,26 +1,19 @@
 {
-  "maxHistory": 500,
-  "minContentLength": 2,
-  "maxContentLength": 200000,
-  "pollFallbackSeconds": 2,
-  "ignoreWindowPatterns": [
-    "KeePassXC",
-    "Bitwarden",
-    "1Password"
-  ],
-  "ignoreContentPatterns": [
-    "-----BEGIN (RSA |OPENSSH |EC |DSA )?PRIVATE KEY-----"
-  ],
+  "maxHistory": 5000,
+  "ignoreApps": [],
+  "doNotDisturb": {
+    "enabled": false,
+    "start": "23:00",
+    "end": "08:00",
+    "allowUrgent": true
+  },
   "webhooks": [
     {
-      "name": "example-disabled",
+      "name": "example-discord",
+      "url": "",
       "enabled": false,
-      "url": "https://example.com/webhook",
-      "method": "POST",
-      "matchPattern": ".*",
-      "headers": {},
-      "timeoutSeconds": 4,
-      "includeSourceWindow": true
+      "appPatterns": ["*"],
+      "minUrgency": 2
     }
   ]
 }

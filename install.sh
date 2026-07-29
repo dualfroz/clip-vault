@@ -2,36 +2,37 @@
 set -euo pipefail
 
 sourceDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-installDir="$HOME/.local/share/clip-vault"
+installDir="$HOME/.local/share/notif-vault-src"
 binDir="$HOME/.local/bin"
 autostartDir="$HOME/.config/autostart"
 
 mkdir -p "$installDir" "$binDir" "$autostartDir"
-rsync -a --delete "$sourceDir/clip_vault" "$installDir/"
+rsync -a --delete "$sourceDir/notif_vault" "$installDir/"
 cp "$sourceDir/config.default.json" "$installDir/config.default.json"
 
-cat > "$binDir/clip-vault" <<EOF
+cat > "$binDir/notif-vault" <<EOF
 #!/usr/bin/env bash
-exec python3 -m clip_vault.cli "\$@"
+exec env PYTHONPATH=$installDir python3 -m notif_vault.cli "\$@"
 EOF
-chmod +x "$binDir/clip-vault"
+chmod +x "$binDir/notif-vault"
 
-cat > "$binDir/clip-vault-daemon" <<EOF
+cat > "$binDir/notif-vault-daemon" <<EOF
 #!/usr/bin/env bash
-exec python3 -m clip_vault.daemon
+exec env PYTHONPATH=$installDir python3 -m notif_vault.daemon
 EOF
-chmod +x "$binDir/clip-vault-daemon"
+chmod +x "$binDir/notif-vault-daemon"
 
-cat > "$autostartDir/clip-vault.desktop" <<EOF
+cat > "$autostartDir/notif-vault.desktop" <<EOF
 [Desktop Entry]
 Type=Application
-Name=Clip Vault
-Exec=env PYTHONPATH=$installDir $binDir/clip-vault-daemon
+Name=Notif Vault
+Exec=$binDir/notif-vault-daemon
 X-GNOME-Autostart-enabled=true
 EOF
 
-echo "installed. PYTHONPATH must include $installDir when running clip-vault/clip-vault-daemon by hand:"
-echo "  export PYTHONPATH=$installDir:\$PYTHONPATH"
-echo "  clip-vault-daemon &   # starts tray + clipboard watcher"
-echo "  clip-vault list       # view history from the CLI"
-echo "config file: ~/.config/clip-vault/config.json (edit webhooks there)"
+echo "installed."
+echo "  notif-vault-daemon &        # starts the background history logger"
+echo "  notif-vault list            # search recent notifications"
+echo "  notif-vault list --app discord --since 2h"
+echo "  notif-vault tail            # live-follow new notifications"
+echo "config file: ~/.config/notif-vault/config.json (do-not-disturb window + webhook forwarding rules)"

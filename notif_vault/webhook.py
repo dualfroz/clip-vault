@@ -1,36 +1,36 @@
+import fnmatch
 import json
-import re
 import threading
 import time
 import urllib.request
+from pathlib import Path
 
-from clip_vault.config import logPath
+logDir = Path.home() / ".local" / "share" / "notif-vault"
+logPath = logDir / "webhook.log"
 
 
 def logLine(line):
+    logDir.mkdir(parents=True, exist_ok=True)
     with open(logPath, "a") as logFile:
         logFile.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')} {line}\n")
 
 
-def matchingWebhooks(content, config):
+def matchingWebhooks(appName, urgency, config):
     matches = []
     for webhook in config.get("webhooks", []):
         if not webhook.get("enabled"):
             continue
-        pattern = webhook.get("matchPattern", ".*")
-        try:
-            if re.search(pattern, content):
-                matches.append(webhook)
-        except re.error as regexError:
-            logLine(f"invalid matchPattern in webhook '{webhook.get('name')}': {regexError}")
+        if urgency < webhook.get("minUrgency", 0):
+            continue
+        patterns = webhook.get("appPatterns", ["*"])
+        if any(fnmatch.fnmatch(appName, pattern) for pattern in patterns):
+            matches.append(webhook)
     return matches
 
 
-def sendWebhook(webhook, content, sourceWindow):
-    body = {"content": content, "timestamp": time.time()}
-    if webhook.get("includeSourceWindow", True):
-        body["sourceWindow"] = sourceWindow
-    data = json.dumps(body).encode("utf-8")
+def sendWebhook(webhook, appName, summary, body):
+    payload = {"appName": appName, "summary": summary, "body": body, "timestamp": time.time()}
+    data = json.dumps(payload).encode("utf-8")
     headers = {"Content-Type": "application/json"}
     headers.update(webhook.get("headers", {}))
     request = urllib.request.Request(webhook["url"], data=data, headers=headers, method=webhook.get("method", "POST"))
@@ -43,8 +43,8 @@ def sendWebhook(webhook, content, sourceWindow):
         return False
 
 
-def dispatchAsync(content, sourceWindow, config, onDone=None):
-    matches = matchingWebhooks(content, config)
+def dispatchAsync(appName, summary, body, urgency, config, onDone=None):
+    matches = matchingWebhooks(appName, urgency, config)
     if not matches:
         if onDone:
             onDone([])
@@ -53,7 +53,7 @@ def dispatchAsync(content, sourceWindow, config, onDone=None):
     def worker():
         sentNames = []
         for webhook in matches:
-            if sendWebhook(webhook, content, sourceWindow):
+            if sendWebhook(webhook, appName, summary, body):
                 sentNames.append(webhook.get("name", webhook["url"]))
         if onDone:
             onDone(sentNames)
