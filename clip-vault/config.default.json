@@ -1,0 +1,26 @@
+{
+  "maxHistory": 500,
+  "minContentLength": 2,
+  "maxContentLength": 200000,
+  "pollFallbackSeconds": 2,
+  "ignoreWindowPatterns": [
+    "KeePassXC",
+    "Bitwarden",
+    "1Password"
+  ],
+  "ignoreContentPatterns": [
+    "-----BEGIN (RSA |OPENSSH |EC |DSA )?PRIVATE KEY-----"
+  ],
+  "webhooks": [
+    {
+      "name": "example-disabled",
+      "enabled": false,
+      "url": "https://example.com/webhook",
+      "method": "POST",
+      "matchPattern": ".*",
+      "headers": {},
+      "timeoutSeconds": 4,
+      "includeSourceWindow": true
+    }
+  ]
+}
