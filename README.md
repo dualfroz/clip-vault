@@ -65,16 +65,11 @@ cd clip-vault
 ```
 
 This copies the package into `~/.local/share/clip-vault`, drops `clip-vault`
-and `clip-vault-daemon` wrappers into `~/.local/bin`, and adds an autostart
+and `clip-vault-daemon` wrappers into `~/.local/bin` (both wrappers set
+`PYTHONPATH` themselves, so they work from any shell), and adds an autostart
 entry so the daemon starts with your session.
 
-One rough edge worth knowing: the two wrapper scripts do **not** set
-`PYTHONPATH` themselves, so running them by hand from a fresh shell needs it
-exported first. The autostart entry sets it for you, so this only affects
-manual runs.
-
 ```bash
-export PYTHONPATH="$HOME/.local/share/clip-vault:$PYTHONPATH"
 clip-vault-daemon &
 ```
 
