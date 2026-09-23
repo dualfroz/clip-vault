@@ -20,6 +20,9 @@ def matchingWebhooks(appName, urgency, config):
     for webhook in config.get("webhooks", []):
         if not webhook.get("enabled"):
             continue
+        if not webhook.get("url"):
+            logLine(f"webhook '{webhook.get('name')}' skipped: no url")
+            continue
         if urgency < webhook.get("minUrgency", 0):
             continue
         patterns = webhook.get("appPatterns", ["*"])
@@ -33,8 +36,8 @@ def sendWebhook(webhook, appName, summary, body):
     data = json.dumps(payload).encode("utf-8")
     headers = {"Content-Type": "application/json"}
     headers.update(webhook.get("headers", {}))
-    request = urllib.request.Request(webhook["url"], data=data, headers=headers, method=webhook.get("method", "POST"))
     try:
+        request = urllib.request.Request(webhook.get("url", ""), data=data, headers=headers, method=webhook.get("method", "POST"))
         with urllib.request.urlopen(request, timeout=webhook.get("timeoutSeconds", 4)) as response:
             logLine(f"webhook '{webhook.get('name')}' -> {response.status}")
             return True

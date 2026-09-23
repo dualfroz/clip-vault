@@ -31,13 +31,16 @@ def cmdList(args):
 def cmdTail(args):
     seenIds = set()
     print("watching for new notifications, ctrl-c to stop")
-    while True:
-        rows = storage.queryNotifications(limit=20)
-        for row in reversed(rows):
-            if row[0] not in seenIds:
-                seenIds.add(row[0])
-                printRows([row])
-        time.sleep(1)
+    try:
+        while True:
+            rows = storage.queryNotifications(limit=20)
+            for row in reversed(rows):
+                if row[0] not in seenIds:
+                    seenIds.add(row[0])
+                    printRows([row])
+            time.sleep(1)
+    except KeyboardInterrupt:
+        print()
 
 
 def parseSince(sinceText):

@@ -8,8 +8,6 @@ from gi.repository import GLib
 from notif_vault import storage, webhook
 from notif_vault.config import ensureUserConfig, loadConfig
 
-URGENCY_NAMES = {0: "low", 1: "normal", 2: "critical"}
-
 
 def isIgnored(appName, config):
     for pattern in config.get("ignoreApps", []):
@@ -18,15 +16,21 @@ def isIgnored(appName, config):
     return False
 
 
-def isWithinDnd(config):
+def isWithinDnd(config, currentTime=None):
     dnd = config.get("doNotDisturb", {})
     if not dnd.get("enabled"):
         return False
-    now = datetime.now().strftime("%H:%M")
+    now = (currentTime or datetime.now()).strftime("%H:%M")
     start, end = dnd.get("start", "23:00"), dnd.get("end", "08:00")
     if start <= end:
         return start <= now < end
     return now >= start or now < end
+
+
+def shouldForward(urgency, config, currentTime=None):
+    if not isWithinDnd(config, currentTime):
+        return True
+    return config.get("doNotDisturb", {}).get("allowUrgent", True) and urgency == 2
 
 
 class NotifVaultDaemon:
@@ -55,9 +59,7 @@ class NotifVaultDaemon:
         storage.trimHistory(self.config.get("maxHistory", 5000))
         notificationId = storage.lastInsertId()
 
-        if isWithinDnd(self.config) and not (
-            self.config.get("doNotDisturb", {}).get("allowUrgent", True) and urgency == 2
-        ):
+        if not shouldForward(urgency, self.config):
             return
 
         def onWebhookDone(sentNames):

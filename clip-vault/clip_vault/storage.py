@@ -29,11 +29,15 @@ def addClip(content, contentHash, sourceWindow, webhookSentTo=None):
         "SELECT id FROM clips WHERE contentHash = ? ORDER BY id DESC LIMIT 1", (contentHash,)
     ).fetchone()
     if existing:
-        connection.execute("DELETE FROM clips WHERE id = ?", (existing[0],))
-    connection.execute(
-        "INSERT INTO clips (content, contentHash, sourceWindow, createdAt, pinned, webhookSentTo) VALUES (?, ?, ?, ?, 0, ?)",
-        (content, contentHash, sourceWindow, time.time(), webhookSentTo),
-    )
+        connection.execute(
+            "UPDATE clips SET sourceWindow = ?, createdAt = ?, webhookSentTo = ? WHERE id = ?",
+            (sourceWindow, time.time(), webhookSentTo, existing[0]),
+        )
+    else:
+        connection.execute(
+            "INSERT INTO clips (content, contentHash, sourceWindow, createdAt, pinned, webhookSentTo) VALUES (?, ?, ?, ?, 0, ?)",
+            (content, contentHash, sourceWindow, time.time(), webhookSentTo),
+        )
     connection.commit()
     connection.close()
 

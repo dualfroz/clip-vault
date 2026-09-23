@@ -9,7 +9,7 @@
   },
   "webhooks": [
     {
-      "name": "example-discord",
+      "name": "example-disabled",
       "url": "",
       "enabled": false,
       "appPatterns": ["*"],
